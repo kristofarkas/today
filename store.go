@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os/user"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -82,11 +83,20 @@ func Load(name string) (*Task, error) {
 		return nil, err
 	}
 
+	var fuzzyMatch []*Task
+
 	for _, t := range ts {
 		if t.Name == name {
 			return t, nil
+		} else if strings.HasPrefix(strings.ToLower(t.Name), strings.ToLower(name)) {
+			fuzzyMatch = append(fuzzyMatch, t)
 		}
 	}
+
+	if len(fuzzyMatch) == 1 {
+		return fuzzyMatch[0], nil
+	}
+
 	return nil, fmt.Errorf("%s not found", name)
 }
 
@@ -126,7 +136,7 @@ func Print(output io.Writer, verbose bool) {
 		fmt.Fprintf(w, format, "Name", "Current", "Today", "To go", "Progress", "P/D")
 		fmt.Fprintf(w, format, "----", "-------", "-----", "-----", "--------", "---")
 
-		for i := len(ts)-1; i >= 0; i-- {
+		for i := len(ts) - 1; i >= 0; i-- {
 			t := ts[i]
 			fmt.Fprintf(w, format, t.Name, t.Current, t.Today(), t.ToGo(), fmt.Sprintf("%d%%", t.Progress()), t.UnitsPerDay())
 		}
@@ -136,7 +146,7 @@ func Print(output io.Writer, verbose bool) {
 		fmt.Fprintf(w, format, "Name", "Current", "Today")
 		fmt.Fprintf(w, format, "----", "-------", "-----")
 
-		for i := len(ts)-1; i >= 0; i-- {
+		for i := len(ts) - 1; i >= 0; i-- {
 			t := ts[i]
 			fmt.Fprintf(w, format, t.Name, t.Current, t.Today())
 		}
